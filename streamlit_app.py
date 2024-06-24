@@ -47,6 +47,18 @@ def display_pokemon_data(pokemon, title, apperance):
                 st.write(f"- {stat['stat']['name'].capitalize()}: {stat['base_stat']}")
     return 0, []
 
+# Function to fetch all Pokémon names from the API
+def get_all_pokemon_names():
+    url = "https://pokeapi.co/api/v2/pokemon?limit=151"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        pokemon_list = data['results']
+        return [pokemon['name'] for pokemon in pokemon_list]
+    else:
+        st.error("Failed to fetch Pokémon list.")
+        return []
+
 # Function to fetch move details from the move URL
 def get_move_details(move_url):
     response = requests.get(move_url)
@@ -80,7 +92,7 @@ def calculate_damage(level, attack, defense, base, modifier):
     damage = (((2 * level + 10) / 250) * (attack / defense) * base + 2) * modifier
     return int(damage)
 
-# Initialize session state variables
+# Initialise session state variables
 if 'user_pokemon_number' not in st.session_state:
     st.session_state.user_pokemon_number = 1
 if 'user_pokemon_health' not in st.session_state:
@@ -99,11 +111,14 @@ if 'battle_in_progress' not in st.session_state:
 # Streamlit app
 st.title("Pokémon Battle Simulator")
 
+# Fetch all Pokémon names
+all_pokemon_names = get_all_pokemon_names()
+
 # Input field for user-selected Pokémon
-st.session_state.user_pokemon_number = st.slider("Select your favourite Pokémon number", 1, 151, step=1)
-user_pokemon = get_pokemon_data(st.session_state.user_pokemon_number)
+st.session_state.user_pokemon_name = st.selectbox("Select your favourite Pokémon", all_pokemon_names)
+user_pokemon = get_pokemon_data(st.session_state.user_pokemon_name)
 if 'user_pokemon_health' not in st.session_state or st.session_state.user_pokemon_health is None:
-    st.session_state.user_pokemon_health = user_pokemon['stats'][0]['base_stat']
+    st.session_state.user_pokemon_health = user_pokemon['stats'][0]['base_stat'] * 2  # Example: Set health to 2 times the base HP
 
 pokemon_attacks = attacks(user_pokemon)
 df_attacks = pd.DataFrame(pokemon_attacks)
