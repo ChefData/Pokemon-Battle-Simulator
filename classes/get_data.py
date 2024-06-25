@@ -152,15 +152,16 @@ class GetData:
         return attacks
 
     @staticmethod
-    def calculate_damage(level: int, attack: int, defense: int, base: Optional[int], modifier: int) -> int:
+    def calculate_damage(level: int, attack: int, defense: int, base: Optional[int], accuracy: int, modifier: int) -> int:
         """
         Calculates damage based on attack and defense stats.
 
         Args:
-        - level (int): The level of the Pokémon.
-        - attack (int): The attack stat.
-        - defense (int): The defense stat.
+        - level (int): Level of the attacking Pokémon
+        - attack (int): Attack stat of the attacking Pokémon
+        - defense (int): Defense stat of the defending Pokémon
         - base (int or None): The base power of the attack.
+        - accuracy (int): Accuracy of the move
         - modifier (int): Additional modifier for damage calculation.
 
         Returns:
@@ -168,7 +169,13 @@ class GetData:
         """
         if base is None:
             base = 0  # Set a default value if base power is not available
+        if accuracy is None:
+            accuracy = 100  # Set a default value if base power is not available
         if defense == 0:
             defense = 1  # Avoid division by zero
-        damage = (((2 * level + 10) / 250) * (attack / defense) * base + 2) * modifier
-        return int(damage)
+        if random.randint(1, 100) <= accuracy:
+            # If the move hits
+            return int((((2 * level + 10) / 250) * (attack / defense) * base + 2) * modifier)
+        else:
+            # If the move misses
+            return 0
