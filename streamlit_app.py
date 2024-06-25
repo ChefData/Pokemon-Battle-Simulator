@@ -1,7 +1,6 @@
 import streamlit as st
 import re
 import random
-from typing import Union, List, Optional
 import pandas as pd
 
 from classes.get_data import GetData
@@ -14,33 +13,26 @@ plot_charts = PlotCharts()
 
 # Initialise session state variables if not already initialised
 def init_session_state():
-    if 'user_pokemon_name' not in st.session_state:
-        st.session_state.user_pokemon_name = None
+    default_values = {
+        'user_pokemon_name': None,
+        'user_pokemon_number': 1,
+        'opponent_pokemon': None,
+        'user_pokemon_health': None,
+        'opponent_pokemon_health': None,
+        'user_attack_selected': None,
+        'battle_in_progress': False
+    }
 
-    if 'user_pokemon_number' not in st.session_state:
-        st.session_state.user_pokemon_number = 1
-
-    if 'opponent_pokemon' not in st.session_state:
-        st.session_state.opponent_pokemon = None
-        
-    if 'user_pokemon_health' not in st.session_state:
-        st.session_state.user_pokemon_health = None
-
-    if 'opponent_pokemon_health' not in st.session_state:
-        st.session_state.opponent_pokemon_health = None
-
-    if 'user_attack_selected' not in st.session_state:
-        st.session_state.user_attack_selected = None
-
-    if 'battle_in_progress' not in st.session_state:
-        st.session_state.battle_in_progress = False
+    for key, value in default_values.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
 
 init_session_state()
 
 # Streamlit app title
 st.title("Pokémon Battle Simulator")
 
-# Function to get session state with caching
+# Simple persistent state: The dictionary returned by `get_state()` will be persistent across browser sessions.
 @st.cache_resource()
 def get_state() -> dict:
     """Get the current session state."""
@@ -102,7 +94,7 @@ df_attacks = pd.DataFrame(pokemon_attacks)
 with st.container(border=True):
     col1, col2 = st.columns(2)
     with col1:
-        get_data.display_pokemon_data(user_pokemon, f"{user_pokemon['name'].capitalize()}", "front", fight = False)
+        get_data.display_pokemon_data(user_pokemon, f"{user_pokemon['name'].capitalize()} I choose you!", "front", fight = False)
     with col2:
         st.subheader(f"{user_pokemon['name'].capitalize()} Moves")
         st.dataframe(df_attacks)
@@ -119,7 +111,7 @@ if st.session_state.opponent_pokemon:
     col1, col2 = st.columns(2)
     with col1:
         with st.container(border=True):
-            get_data.display_pokemon_data(user_pokemon, f"{user_pokemon['name'].capitalize()} I choose you!", "back", fight = True)
+            get_data.display_pokemon_data(user_pokemon, f"Go! {user_pokemon['name'].upper()}", "back", fight = True)
     with col2:
         with st.container(border=True):
             get_data.display_pokemon_data(st.session_state.opponent_pokemon, f"Wild {st.session_state.opponent_pokemon['name'].capitalize()} appeared!", "front", fight = True)
@@ -147,12 +139,15 @@ if st.session_state.opponent_pokemon:
         col1, col2 = st.columns(2)
         with col1:
             with st.container(border=True):
-                damage_to_opponent = get_data.calculate_damage(50, user_pokemon['stats'][1]['base_stat'], st.session_state.opponent_pokemon['stats'][2]['base_stat'], st.session_state.user_attack_selected['power'], 1)
+                damage_to_opponent = get_data.calculate_damage(50, user_pokemon['stats'][1]['base_stat'], st.session_state.opponent_pokemon['stats'][2]['base_stat'], st.session_state.user_attack_selected['power'], st.session_state.user_attack_selected['accuracy'], 1)
                 st.session_state.opponent_pokemon_health -= damage_to_opponent
                 if st.session_state.opponent_pokemon_health < 0:
                     st.session_state.opponent_pokemon_health = 0
                 st.write(f"{user_pokemon['name'].capitalize()} used {user_attack_name.capitalize()}!")
-                st.write(f"It dealt {damage_to_opponent} damage!")
+                if damage_to_opponent == 0:
+                    st.write("But, it failed!")
+                else:
+                    st.write(f"It dealt {damage_to_opponent} damage!")
                 st.write(f"Wild {st.session_state.opponent_pokemon['name'].capitalize()}'s remaining health: {st.session_state.opponent_pokemon_health}")
 
                 if st.session_state.opponent_pokemon_health == 0:
@@ -165,12 +160,15 @@ if st.session_state.opponent_pokemon:
                     opponent_attacks = get_data.attacks(st.session_state.opponent_pokemon)
                     if opponent_attacks:
                         opponent_attack = random.choice(opponent_attacks)
-                        damage_to_user = get_data.calculate_damage(50, st.session_state.opponent_pokemon['stats'][1]['base_stat'], user_pokemon['stats'][2]['base_stat'], opponent_attack['power'], 1)
+                        damage_to_user = get_data.calculate_damage(50, st.session_state.opponent_pokemon['stats'][1]['base_stat'], user_pokemon['stats'][2]['base_stat'], opponent_attack['power'], opponent_attack['accuracy'], 1)
                         st.session_state.user_pokemon_health -= damage_to_user
                         if st.session_state.user_pokemon_health < 0:
                             st.session_state.user_pokemon_health = 0
                         st.write(f"Wild {st.session_state.opponent_pokemon['name'].capitalize()} used {opponent_attack['name'].capitalize()}!")
-                        st.write(f"It dealt {damage_to_user} damage!")
+                        if damage_to_user == 0:
+                            st.write("But, it failed!")
+                        else:
+                            st.write(f"It dealt {damage_to_user} damage!")
                         st.write(f"{user_pokemon['name'].capitalize()}'s remaining health: {st.session_state.user_pokemon_health}")
 
                         if st.session_state.user_pokemon_health == 0:
@@ -182,7 +180,8 @@ if st.session_state.opponent_pokemon:
         st.plotly_chart(fig)
 
 # Button to reset user Pokémon's health after battle
-if not st.session_state.battle_in_progress and (st.session_state.user_pokemon_health == 0 or st.session_state.opponent_pokemon_health == 0):
+if st.session_state.user_pokemon_health == 0:
+
     if st.button("Use Max Potion"):
         st.session_state.user_pokemon_health = user_pokemon['stats'][0]['base_stat']
         st.write(f"{user_pokemon['name'].capitalize()}'s health has been reset to {st.session_state.user_pokemon_health}.")
