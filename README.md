@@ -1,8 +1,10 @@
 # Pokémon Battle Simulator
 
-Welcome to the Pokémon Battle Simulator! This Streamlit application allows you to simulate Pokémon battles between your favourite Pokémon and wild Pokémon. You can choose your Pokémon, select attacks, and battle against a randomly selected opponent. The application displays health bars, attack details, and battle outcomes in real-time using Streamlit and Altair for visualizations.
+Welcome to the Pokémon Battle Simulator! This Streamlit application allows you to simulate Pokémon battles between your favourite Pokémon and wild Pokémon. You can choose your Pokémon, select attacks, and battle against a randomly selected opponent. The application displays real-time health bars, attack details, and battle outcomes using Streamlit, Altair and Plotly for visualisations.
 
-![Screenshot](screenshot.png)
+You can choose from the original 151 Pokémon from the 1996 RPGs Pokémon Red Version and Pokémon Blue Version.
+
+![Blue](<https://imgs.search.brave.com/3LkWG5fIbgfiLb4pr0pU7nNt1A1_3UHw3Hta6rR1quQ/rs:fit:860:0:0/g:ce/aHR0cHM6Ly9pbWcu/cG9rZW1vbmRiLm5l/dC9ib3hlcy9ibHVl/LmpwZw>) ![Red](<https://imgs.search.brave.com/a3Zf3BcR4OAJ0oISRKUAJNA-ru5EsbQTD87lOUagDuw/rs:fit:860:0:0/g:ce/aHR0cHM6Ly9pbWcu/cG9rZW1vbmRiLm5l/dC9ib3hlcy9yZWQu/anBn>)
 
 ## Features
 
@@ -17,7 +19,7 @@ Welcome to the Pokémon Battle Simulator! This Streamlit application allows you 
 - **Streamlit**: For building and deploying the web application.
 - **Python**: Backend logic and calculations.
 - **Pandas**: Data manipulation and handling.
-- **Altair**: Visualizing attack details using interactive charts.
+- **Altair**: Visualising attack details using interactive charts.
 - **Random**: Generating random opponents for battles.
 
 ## Installation
@@ -47,12 +49,16 @@ To run the Pokémon Battle Simulator locally, follow these steps:
 
 ## Usage
 
+   ![Choose](<images/Choose.png>)
+
 1. **Select Your Pokémon:**
    - Use the slider to choose your Pokémon by number (1-151).
    - Alternatively, select your Pokémon by name from the dropdown list.
 
 2. **View Pokémon Stats and Moves:**
    - Once a Pokémon is selected, its stats and available attack moves are displayed.
+
+   ![Choose](<images/Move.png>)
 
 3. **Battle Start:**
    - Click on "Wild Pokémon appeared!" to start a battle with a randomly chosen wild Pokémon.
@@ -61,13 +67,15 @@ To run the Pokémon Battle Simulator locally, follow these steps:
    - During battles, see your Pokémon facing off against the opponent.
    - Use the dropdown to select an attack move for your Pokémon.
 
+   ![Choose](<images/Fight.png>)
+
 5. **Attack and Damage:**
    - Click "Use Move" to execute the selected attack.
    - Damage dealt and remaining health are displayed for both Pokémon.
 
 6. **Battle Outcome:**
    - Continue battling until one Pokémon's health drops to zero.
-   - Once a battle ends, you can reset your Pokémon's health using "Use Max Potion" and call another opponent by clicking on "Wild Pokémon appeared!" again.
+   - Once a battle ends, reset your Pokémon's health using "Use Max Potion" and call another opponent by clicking "Wild Pokémon appeared!" again.
 
 ## Contributing
 
