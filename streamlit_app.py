@@ -3,6 +3,7 @@ import requests
 import random
 import pandas as pd
 import altair as alt
+import plotly.graph_objects as go
 
 # Function to fetch Pokémon data from the API
 def get_pokemon_data(number):
@@ -92,14 +93,52 @@ def calculate_damage(level, attack, defense, base, modifier):
     damage = (((2 * level + 10) / 250) * (attack / defense) * base + 2) * modifier
     return int(damage)
 
-# Initialise session state variables
+# Function to create a radar chart comparing the stats of two Pokémon
+def plot_stats_comparison(user_pokemon, opponent_pokemon):
+    user_stats = [stat['base_stat'] for stat in user_pokemon['stats']]
+    opponent_stats = [stat['base_stat'] for stat in opponent_pokemon['stats']]
+    labels = [stat['stat']['name'].capitalize() for stat in user_pokemon['stats']]
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatterpolar(
+        r=user_stats,
+        theta=labels,
+        fill='toself',
+        name=user_pokemon['name'].capitalize()
+    ))
+
+    fig.add_trace(go.Scatterpolar(
+        r=opponent_stats,
+        theta=labels,
+        fill='toself',
+        name=opponent_pokemon['name'].capitalize()
+    ))
+
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, max(max(user_stats), max(opponent_stats)) + 10]
+            )
+        ),
+        showlegend=True,
+        title=f"Stats Comparison: {user_pokemon['name'].capitalize()} vs {opponent_pokemon['name'].capitalize()}"
+    )
+
+    return fig
+
+# Initialize session state variables
+if 'user_pokemon_name' not in st.session_state:
+    st.session_state.user_pokemon_name = None
 if 'user_pokemon_number' not in st.session_state:
     st.session_state.user_pokemon_number = 1
-if 'user_pokemon_health' not in st.session_state:
-    st.session_state.user_pokemon_health = None
 
 if 'opponent_pokemon' not in st.session_state:
     st.session_state.opponent_pokemon = None
+    
+if 'user_pokemon_health' not in st.session_state:
+    st.session_state.user_pokemon_health = None
 if 'opponent_pokemon_health' not in st.session_state:
     st.session_state.opponent_pokemon_health = None
 
@@ -114,11 +153,23 @@ st.title("Pokémon Battle Simulator")
 # Fetch all Pokémon names
 all_pokemon_names = get_all_pokemon_names()
 
-# Input field for user-selected Pokémon
-st.session_state.user_pokemon_name = st.selectbox("Select your favourite Pokémon", all_pokemon_names)
+# User-selected Pokémon by name
+user_pokemon_name = st.selectbox("Select your favourite Pokémon", all_pokemon_names, index=st.session_state.user_pokemon_number - 1)
+
+# User-selected Pokémon by number
+user_pokemon_number = st.slider("Select your favourite Pokémon number", 1, 151, st.session_state.user_pokemon_number)
+
+# Synchronize inputs
+if st.session_state.user_pokemon_name != user_pokemon_name:
+    st.session_state.user_pokemon_name = user_pokemon_name
+    st.session_state.user_pokemon_number = all_pokemon_names.index(user_pokemon_name) + 1
+elif st.session_state.user_pokemon_number != user_pokemon_number:
+    st.session_state.user_pokemon_number = user_pokemon_number
+    st.session_state.user_pokemon_name = all_pokemon_names[user_pokemon_number - 1]
+
 user_pokemon = get_pokemon_data(st.session_state.user_pokemon_name)
 if 'user_pokemon_health' not in st.session_state or st.session_state.user_pokemon_health is None:
-    st.session_state.user_pokemon_health = user_pokemon['stats'][0]['base_stat'] * 2  # Example: Set health to 2 times the base HP
+    st.session_state.user_pokemon_health = user_pokemon['stats'][0]['base_stat']
 
 pokemon_attacks = attacks(user_pokemon)
 df_attacks = pd.DataFrame(pokemon_attacks)
@@ -142,6 +193,11 @@ if st.session_state.opponent_pokemon:
     with col2:
         display_pokemon_data(st.session_state.opponent_pokemon, f"Wild {st.session_state.opponent_pokemon['name'].capitalize()} appeared!", "front")
 
+    # Radar chart for stats comparison
+    if st.session_state.opponent_pokemon:
+        fig = plot_stats_comparison(user_pokemon, st.session_state.opponent_pokemon)
+        st.plotly_chart(fig)
+
     st.subheader(f"{user_pokemon['name'].capitalize()} Moves")
    
     user_attack_name = st.selectbox("**Select a Move:**", [attack['name'] for attack in pokemon_attacks])
@@ -154,8 +210,10 @@ if st.session_state.opponent_pokemon:
         if selected_attack:
             df_selected_attack = pd.DataFrame([selected_attack])
             bar_chart = alt.Chart(df_selected_attack).mark_bar().encode(
+                # quantitative :Q a continuous real-valued quantity
                 x=alt.X('value:Q', axis=alt.Axis(title='Value')),
-                y=alt.Y('attribute:N', sort='-x')
+                # 
+                y=alt.Y('attribute:N')
             ).transform_fold(
                 ['power', 'accuracy', 'pp']
             ).transform_calculate(
@@ -166,7 +224,7 @@ if st.session_state.opponent_pokemon:
                 width=400
             )
             st.altair_chart(bar_chart)
-
+    
         # Button to use the selected attack
     if st.button("Use Move", key="use_move"):
         col1, col2 = st.columns(2)
